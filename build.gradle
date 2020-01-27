@@ -1,0 +1,72 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.4.RELEASE' apply false
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	jcenter()
+}
+
+dependencies {
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+
+	implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+
+	testImplementation group: 'junit', name: 'junit'
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir('src/main/java')
+		}
+		resources {
+			srcDir('src/main/resources')
+			exclude '**/*.properties'
+			exclude '**/*.xml'
+		}
+	}
+	test {
+		java {
+			srcDir('src/test/java')
+		}
+		resources {
+			srcDir('src/test/resources')
+		}
+	}
+}
+
+bootJar {
+	group = 'com.github.romulomf'
+	archiveBaseName = 'prova-programador'
+
+	manifest {
+		attributes 'Start-Class': 'com.github.romulomf.test.TestApplication'
+	}
+}
+
+eclipse {
+	project {
+		name = 'prova-programador'
+		comment = 'Projeto de candidatura à vaga de Programador Java'
+	}
+
+	sourceCompatibility = 11
+	targetCompatibility = 11
+
+	jdt {
+		sourceCompatibility = 11
+		targetCompatibility = 11
+	}
+
+	classpath {
+		downloadSources = false
+		downloadJavadoc = true
+	}
+}
