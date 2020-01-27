@@ -59,7 +59,7 @@ public class SalesDataService {
 	}
 
 	public void processBatch() {
-		try(Stream<Path> paths = Files.list(inputDirectory)) {
+		try (Stream<Path> paths = Files.list(inputDirectory)) {
 			paths.forEach(p -> pool.execute(() -> processFile(p)));
 			registerDirectoryChangeListener();
 		} catch (IOException | InterruptedException e) {
@@ -89,33 +89,35 @@ public class SalesDataService {
 	}
 
 	private void processFile(Path file) {
-		Map<DataType, Set<SaleData>> translatedData = new EnumMap<>(DataType.class);
-		translatedData.put(DataType.SALESMAN, new HashSet<SaleData>());
-		translatedData.put(DataType.CUSTOMER, new HashSet<SaleData>());
-		translatedData.put(DataType.SALE, new HashSet<SaleData>());
-		List<String> content = null;
-		try {
-			content = Files.readAllLines(file);
-			for (String line : content) {
-				String[] data = StringUtils.split(line, separator);
-				SaleData saleData = translate(data);
-				if (saleData != null) {
-					translatedData.get(saleData.getDataType()).add(saleData);
+		if (file != null && file.getFileName().toString().endsWith(".dat")) {
+			Map<DataType, Set<SaleData>> translatedData = new EnumMap<>(DataType.class);
+			translatedData.put(DataType.SALESMAN, new HashSet<SaleData>());
+			translatedData.put(DataType.CUSTOMER, new HashSet<SaleData>());
+			translatedData.put(DataType.SALE, new HashSet<SaleData>());
+			List<String> content = null;
+			try {
+				content = Files.readAllLines(file);
+				for (String line : content) {
+					String[] data = StringUtils.split(line, separator);
+					SaleData saleData = translate(data);
+					if (saleData != null) {
+						translatedData.get(saleData.getDataType()).add(saleData);
+					}
 				}
+				int salesmanCount = translatedData.get(DataType.SALESMAN).size();
+				int customerCount = translatedData.get(DataType.CUSTOMER).size();
+				Set<SaleData> sales = translatedData.get(DataType.SALE);
+				List<Sale> orderedSales = sales.stream().map(sd -> (Sale) sd).sorted(Comparator.comparingDouble(Sale::getTotal).reversed()).collect(Collectors.toList());
+				Optional<Sale> bestSale = Optional.empty();
+				Optional<Sale> worstSale = Optional.empty();
+				if (!orderedSales.isEmpty()) {
+					bestSale = Optional.of(orderedSales.get(0));
+					worstSale = Optional.of(orderedSales.get(orderedSales.size() - 1));
+				}
+				generateReportFile(file, salesmanCount, customerCount, bestSale, worstSale);
+			} catch (IOException e) {
+				logger.warn(String.format("Ocorreu um erro que impediu que o arquivo %s pudesse ser processado corretamente.", file.getFileName()));
 			}
-			int salesmanCount = translatedData.get(DataType.SALESMAN).size();
-			int customerCount = translatedData.get(DataType.CUSTOMER).size();
-			Set<SaleData> sales = translatedData.get(DataType.SALE);
-			List<Sale> orderedSales = sales.stream().map(sd -> (Sale) sd).sorted(Comparator.comparingDouble(Sale::getTotal).reversed()).collect(Collectors.toList());
-			Optional<Sale> bestSale = Optional.empty();
-			Optional<Sale> worstSale = Optional.empty();
-			if (!orderedSales.isEmpty()) {
-				bestSale = Optional.of(orderedSales.get(0));
-				worstSale = Optional.of(orderedSales.get(orderedSales.size() - 1));
-			}			
-			generateReportFile(file, salesmanCount, customerCount, bestSale, worstSale);
-		} catch (IOException e) {
-			logger.warn(String.format("Ocorreu um erro que impediu que o arquivo %s pudesse ser processado corretamente.", file.getFileName()));
 		}
 	}
 
