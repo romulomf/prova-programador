@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -48,6 +49,9 @@ public class SalesDataService {
 	@Autowired
 	private Path outputDirectory;
 
+	@Autowired
+	private String separator;
+
 	private ForkJoinPool pool;
 
 	public SalesDataService() {
@@ -55,11 +59,8 @@ public class SalesDataService {
 	}
 
 	public void processBatch() {
-		try {
-			List<Path> files = Files.list(inputDirectory).collect(Collectors.toList());
-			for (Path file : files) {
-				pool.execute(() -> processFile(file));
-			}
+		try(Stream<Path> paths = Files.list(inputDirectory)) {
+			paths.forEach(p -> pool.execute(() -> processFile(p)));
 			registerDirectoryChangeListener();
 		} catch (IOException | InterruptedException e) {
 			logger.error(e.getMessage());
@@ -96,7 +97,7 @@ public class SalesDataService {
 		try {
 			content = Files.readAllLines(file);
 			for (String line : content) {
-				String[] data = StringUtils.split(line, SaleData.SEPARATOR);
+				String[] data = StringUtils.split(line, separator);
 				SaleData saleData = translate(data);
 				if (saleData != null) {
 					translatedData.get(saleData.getDataType()).add(saleData);
@@ -173,7 +174,9 @@ public class SalesDataService {
 
 	private void generateReportFile(Path file, int salesmanCount, int customersCount, Optional<Sale> bestSale, Optional<Sale> worstSale) {
 		try {
-			Path reportFile = outputDirectory.resolve(file.getFileName());
+			String[] pathComponents = StringUtils.split(file.getFileName().toString(), '.');
+			String processedFile = String.format("%1$s.done.%2$s", pathComponents[0], pathComponents[1]);
+			Path reportFile = outputDirectory.resolve(processedFile);
 			if (Files.notExists(reportFile)) {
 				Files.createFile(reportFile);
 			}
@@ -183,7 +186,7 @@ public class SalesDataService {
 			bestSale.ifPresent(s -> content.append(String.format("ID da venda mais cara: %d%n", s.getId())));
 			worstSale.ifPresent(s -> content.append(String.format("O pior vendedor: %s%n", s.getSalesmanName())));
 			Files.writeString(reportFile, content.toString(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-			logger.info(String.format("Gerado o arquivo de relatório %s", file));
+			logger.info(String.format("Gerado o arquivo de relatório %s", processedFile));
 		} catch (IOException e) {
 			logger.error(String.format("Ocorreu um erro e por isso não foi possível salvar o arquivo com os dados do relatório originários de %s.", file.getFileName()));
 		}

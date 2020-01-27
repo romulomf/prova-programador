@@ -40,6 +40,11 @@ public class TestApplication {
 		return Paths.get(getHomePath(), "data", "out");
 	}
 
+	@Bean(name = "separator")
+	public String createSeparator() {
+		return "çÇ";
+	}
+
 	private String getHomePath() {
 		return System.getProperty("user.home");
 	}
