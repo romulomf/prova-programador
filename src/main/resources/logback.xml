@@ -5,5 +5,5 @@
 	<root level="INFO">
 		<appender-ref ref="CONSOLE" />
 	</root>
-	<logger name="br.com.ntconsult.service" level="INFO" />
+	<logger name="com.github.romulomf" level="INFO" />
 </configuration>

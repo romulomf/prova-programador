@@ -58,11 +58,11 @@ public class SalesDataService {
 		pool = new ForkJoinPool();
 	}
 
-	public void processBatch() {
+	public void processBatch() throws InterruptedException {
 		try (Stream<Path> paths = Files.list(inputDirectory)) {
 			paths.forEach(p -> pool.execute(() -> processFile(p)));
 			registerDirectoryChangeListener();
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
 	}
@@ -89,11 +89,11 @@ public class SalesDataService {
 	}
 
 	private void processFile(Path file) {
-		if (file != null && file.getFileName().toString().endsWith(".dat")) {
+		if (file != null && StringUtils.endsWith(file.getFileName().toString(), ".dat")) {
 			Map<DataType, Set<SaleData>> translatedData = new EnumMap<>(DataType.class);
-			translatedData.put(DataType.SALESMAN, new HashSet<SaleData>());
-			translatedData.put(DataType.CUSTOMER, new HashSet<SaleData>());
-			translatedData.put(DataType.SALE, new HashSet<SaleData>());
+			translatedData.put(DataType.SALESMAN, new HashSet<>());
+			translatedData.put(DataType.CUSTOMER, new HashSet<>());
+			translatedData.put(DataType.SALE, new HashSet<>());
 			List<String> content = null;
 			try {
 				content = Files.readAllLines(file);
@@ -116,7 +116,7 @@ public class SalesDataService {
 				}
 				generateReportFile(file, salesmanCount, customerCount, bestSale, worstSale);
 			} catch (IOException e) {
-				logger.warn(String.format("Ocorreu um erro que impediu que o arquivo %s pudesse ser processado corretamente.", file.getFileName()));
+				logger.warn("Ocorreu um erro que impediu que o arquivo {} pudesse ser processado corretamente.", file.getFileName());
 			}
 		}
 	}
@@ -188,7 +188,7 @@ public class SalesDataService {
 			bestSale.ifPresent(s -> content.append(String.format("ID da venda mais cara: %d%n", s.getId())));
 			worstSale.ifPresent(s -> content.append(String.format("O pior vendedor: %s%n", s.getSalesmanName())));
 			Files.writeString(reportFile, content.toString(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-			logger.info(String.format("Gerado o arquivo de relatório %s", processedFile));
+			logger.info("Gerado o arquivo de relatório {}", processedFile);
 		} catch (IOException e) {
 			logger.error(String.format("Ocorreu um erro e por isso não foi possível salvar o arquivo com os dados do relatório originários de %s.", file.getFileName()));
 		}

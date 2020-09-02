@@ -18,5 +18,5 @@ Para executar a aplicação, basta iniciar o servidor provido pelo SpringBoot qu
 ### Tecnologias utilizadas
 * JDK 11+
 * Gradle Build Tool
-* SpringBoot (2.2.4)
+* SpringBoot (2.3.3)
 * Apache Commons

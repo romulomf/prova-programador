@@ -38,11 +38,11 @@ public class StartupConfiguration implements ApplicationListener<ApplicationRead
 		try {
 			if (Files.notExists(inputDirectory)) {
 				Files.createDirectories(inputDirectory);
-				logger.info(String.format("Criado o diretório de leitura %s", inputDirectory));
+				logger.info("Criado o diretório de leitura {}.", inputDirectory);
 			}
 			if (Files.notExists(outputDirectory)) {
 				Files.createDirectories(outputDirectory);
-				logger.info(String.format("Criado o diretório de escrita %s", outputDirectory));
+				logger.info("Criado o diretório de escrita {}.", outputDirectory);
 				DosFileAttributeView dosAttrsView;
 				dosAttrsView = Files.getFileAttributeView(outputDirectory, DosFileAttributeView.class);
 				if (dosAttrsView != null) {
@@ -50,9 +50,12 @@ public class StartupConfiguration implements ApplicationListener<ApplicationRead
 				}
 				// pode ser implementada a garantia em sistemas unix-like que o diretório 'out' tenha permissão de escrita também
 			}
+			salesDataService.processBatch();
 		} catch (IOException e) {
 			logger.error("Não foi possível criar os diretórios necessários para aplicação.");
+		} catch (InterruptedException e) {
+			logger.warn("Houve uma interrupção na execução do serviço.");
+			Thread.currentThread().interrupt();
 		}
-		salesDataService.processBatch();
 	}
 }
