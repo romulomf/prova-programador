@@ -1,7 +1,6 @@
 package com.github.romulomf.test.service;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import java.io.IOException;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,7 +56,7 @@ public class SalesDataService {
 
 	public void processBatch() throws InterruptedException {
 		try (Stream<Path> paths = Files.list(inputDirectory)) {
-			paths.forEach(p -> pool.execute(() -> processFile(p)));
+			paths.forEach(this::processFile);
 			registerDirectoryChangeListener();
 		} catch (IOException e) {
 			logger.error(e.getMessage());
@@ -67,7 +65,8 @@ public class SalesDataService {
 
 	private void registerDirectoryChangeListener() throws IOException, InterruptedException {
 		try (WatchService service = FileSystems.getDefault().newWatchService()) {
-			inputDirectory.register(service, ENTRY_CREATE, ENTRY_MODIFY);
+			// Trata apenas os eventos de arquivos novos. Arquivos renomeados dentro do diretório não são reprocessados.
+			inputDirectory.register(service, ENTRY_CREATE);
 			WatchKey key = null;
 			while ((key = service.take()) != null) {
 				for (WatchEvent<?> event : key.pollEvents()) {
@@ -87,7 +86,7 @@ public class SalesDataService {
 	}
 
 	private void processFile(Path file) {
-		if (file != null && StringUtils.endsWith(file.getFileName().toString(), ".dat")) {
+		if (file != null) {
 			logger.info("Encontrado o arquivo {} para ser processado.", file.getFileName());
 			Map<DataType, Set<SaleData>> translatedData = new EnumMap<>(DataType.class);
 			translatedData.put(DataType.SALESMAN, new HashSet<>());
@@ -121,9 +120,7 @@ public class SalesDataService {
 
 	private void generateReportFile(Path file, int salesmanCount, int customersCount, Optional<Sale> bestSale, Optional<Sale> worstSale) {
 		try {
-			String[] pathComponents = StringUtils.split(file.getFileName().toString(), '.');
-			String processedFile = String.format("%1$s.done.%2$s", pathComponents[0], pathComponents[1]);
-			Path reportFile = outputDirectory.resolve(processedFile);
+			Path reportFile = outputDirectory.resolve(file.getFileName());
 			if (Files.notExists(reportFile)) {
 				Files.createFile(reportFile);
 			}
@@ -133,9 +130,9 @@ public class SalesDataService {
 			bestSale.ifPresent(s -> content.append(String.format("ID da venda mais cara: %d%n", s.getId())));
 			worstSale.ifPresent(s -> content.append(String.format("O pior vendedor: %s%n", s.getSalesmanName())));
 			Files.writeString(reportFile, content.toString(), StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
-			logger.info("Gerado o arquivo de relatório {}", processedFile);
+			logger.info("Gerado o arquivo de relatório {}", reportFile.getFileName());
 		} catch (IOException e) {
-			logger.error(String.format("Ocorreu um erro e por isso não foi possível salvar o arquivo com os dados do relatório originários de %s.", file.getFileName()));
+			logger.error(String.format("Ocorreu um erro e por isso não foi possível salvar o arquivo com os dados do relatório originário de %s.", file.getFileName()));
 		}
 	}
 }
