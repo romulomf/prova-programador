@@ -67,4 +67,11 @@ public class Salesman implements SaleData {
 	public DataType getDataType() {
 		return DataType.SALESMAN;
 	}
+
+	public static Salesman parse(String[] data) {
+		String socialNumber = data[1];
+		String name = data[2];
+		double salary = Double.parseDouble(data[3]);
+		return new Salesman(socialNumber, name, salary);
+	}
 }

@@ -67,4 +67,11 @@ public class Customer implements SaleData {
 	public DataType getDataType() {
 		return DataType.CUSTOMER;
 	}
+
+	public static Customer parse(String[] data) {
+		String companyNumber = data[1];
+		String name = data[2];
+		String businessArea = data[3];
+		return new Customer(companyNumber, name, businessArea);
+	}
 }

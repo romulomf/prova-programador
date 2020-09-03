@@ -46,4 +46,26 @@ public class SaleItem {
 	public double getTotal() {
 		return quantity * price;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof SaleItem) {
+			SaleItem other = (SaleItem) obj;
+			return id == other.id;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 13;
+		return prime * id;
+	}
+
+	public static SaleItem parse(String[] data) {
+		int itemCode = Integer.parseInt(data[0]);
+		int itemQuantity = Integer.parseInt(data[1]);
+		double itemPrice = Double.parseDouble(data[2]);
+		return new SaleItem(itemCode, itemQuantity, itemPrice);
+	}
 }

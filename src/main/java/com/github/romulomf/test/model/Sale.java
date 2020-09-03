@@ -1,8 +1,11 @@
 package com.github.romulomf.test.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class Sale implements SaleData {
+import org.apache.commons.lang3.StringUtils;
+
+public class Sale implements SaleData, Comparable<Sale> {
 
 	private int id;
 
@@ -51,5 +54,41 @@ public class Sale implements SaleData {
 	@Override
 	public DataType getDataType() {
 		return DataType.SALE;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Sale) {
+			Sale other = (Sale) obj;
+			return id == other.id;
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		return prime * id;
+	}
+
+	@Override
+	public int compareTo(Sale other) {
+		Double selfSaleSum = Double.valueOf(this.getTotal());
+		Double otherSaleSum = Double.valueOf(other.getTotal());
+		return otherSaleSum.compareTo(selfSaleSum);
+	}
+
+	public static Sale parse(String[] data) {
+		int id = Integer.parseInt(data[1]);
+		String salesmanName = data[3];
+		List<SaleItem> saleItems = new ArrayList<>();
+		String itemData = StringUtils.substringBetween(data[2], "[", "]");
+		String[] items = StringUtils.split(itemData, ',');
+		for (String item : items) {
+			String[] itemInfo = StringUtils.split(item, '-');
+			SaleItem saleItem = SaleItem.parse(itemInfo);
+			saleItems.add(saleItem);
+		}
+		return new Sale(id, saleItems, salesmanName);
 	}
 }
