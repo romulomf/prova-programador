@@ -1,0 +1,14 @@
+{
+	"configurations": [
+		{
+			"type": "java",
+			"name": "Prova Programador",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"mainClass": "com.github.romulomf.test.TestApplication",
+			"projectName": "prova-programador",
+			"args": ""
+		}
+	]
+}
